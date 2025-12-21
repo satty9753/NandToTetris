@@ -1,0 +1,7 @@
+//OFFSET
+@64
+D=A
+// START
+@SCREEN
+A=D+A
+M=-1
