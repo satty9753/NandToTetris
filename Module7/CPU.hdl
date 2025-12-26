@@ -37,10 +37,10 @@ CHIP CPU {
     Register(in= outMux, load= instruction[5], out= Aregister);
     Mux16(a= Aregister, b= inM, sel= instruction[12], out= outMux2);
     Register(in= outAlu, load= instruction[4], out= Dregister);
-    ALU(x= Dregister, y= Mux2, zx= instuction[11], nx=instuction[10], zy= instuction[9], ny= instuction[8], f= instuction[7], no= instuction[6], out= outAlu, zr= outZr, ng= outNg);
+    ALU(x= Dregister, y= Mux2, zx= instuction[11], nx=instuction[10], zy= instuction[9], ny= instuction[8], f= instuction[7], no= instuction[6], out= outAlu, out=outM, zr= outZr, ng= outNg);
     Or(a= instuction[0], b= instuction[1], out= OrOut);
     Or(a= OrOut, b= instuction[2], out= OrOut2);
     Or(a= OrOut2, b= outZr, out= orOut3);
     Or(a= OrOut3, b= outNg, out= orOut4);
-    PC(in= Aregister, load= instruction[3], inc= orOut4, reset= reset, out= outPC);
+    PC(in= Aregister, load= instruction[3], inc= orOut4, reset= reset, out= pc);
 }
