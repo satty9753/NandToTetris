@@ -33,9 +33,10 @@ CHIP CPU {
 
     PARTS:
 	//// Replace this comment with your code.
-    Mux16(a= instruction, b= outAlu, sel= instruction[15], out= outMux);
+     Mux16(a= instruction, b= outAlu, sel= instruction[15], out= outMux);
     Register(in= outMux, load= instruction[15], out= Aregister);
     Mux16(a= Aregister, b= inM, sel= instruction[15], out= outMux2);
     Register(in= outAlu, load= instruction[15], out= Dregister);
-    ALU(x= Dregister, y= Mux2, zx= , nx= , zy= , ny= , f= , no= , out= outAlu, zr= , ng= );
+    ALU(x= Dregister, y= Mux2, zx= instuction[11], nx=instuction[10], zy= instuction[9], ny= instuction[8], f= instuction[7], no= instuction[6], out= outAlu, zr= , ng= );
+    PC(in= Aregister, load= , inc= , reset= reset, out= );
 }
