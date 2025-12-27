@@ -32,15 +32,59 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-	//// Replace this comment with your code.
-    Mux16(a= instruction, b= outAlu, sel= instruction[15], out= outMux);
-    Register(in= outMux, load= instruction[5], out= Aregister);
-    Mux16(a= Aregister, b= inM, sel= instruction[12], out= outMux2);
-    Register(in= outAlu, load= instruction[4], out= Dregister);
-    ALU(x= Dregister, y= Mux2, zx= instuction[11], nx=instuction[10], zy= instuction[9], ny= instuction[8], f= instuction[7], no= instuction[6], out= outAlu, out=outM, zr= outZr, ng= outNg);
-    Or(a= instuction[0], b= instuction[1], out= OrOut);
-    Or(a= OrOut, b= instuction[2], out= OrOut2);
-    Or(a= OrOut2, b= outZr, out= orOut3);
-    Or(a= OrOut3, b= outNg, out= orOut4);
-    PC(in= Aregister, load= instruction[3], inc= orOut4, reset= reset, out= pc);
+    
+    // A-instruction
+    // load A
+    Not(in=instruction[15], out=isAInst); // (instruction[15] == 0) <- This is an A instruction
+    And(a=instruction[15], b=instruction[5], out=isCAndDestA); // OR (instruction[15] == 1 AND destA == 1) <- C Instruction but save to A
+    Or(a=isAInst, b=isCAndDestA, out=loadA);
+    Mux16(a=instruction, b=outAlu, sel=instruction[15], out=Ain);
+    
+    // A Register
+    ARegister(in=Ain, load=loadA, out=Aregister, out[0..14]=addressM);
+
+    // load D
+    // only when destD = 1 and C-Instruction
+    And(a=instruction[15], b=instruction[4], out=loadD);
+
+    // D Register
+    DRegister(in=outAlu, load=loadD, out=Dregister);
+
+    // to ALU
+    Mux16(a=Aregister, b=inM, sel=instruction[12], out=AluY);
+    ALU(x= Dregister, y=AluY , zx= instruction[11], nx= instruction[10], zy= instruction[9], ny= instruction[8], f= instruction[7], no= instruction[6], out= outAlu, out= outM, zr= zr, ng= ng);
+    And(a= instruction[15], b= instruction[3], out= writeM);
+
+    // zr, if (out == 0) equals 1, else 0
+    // ng, if (out < 0)  equals 1, else 0
+    
+    Not(in= zr, out= NotZr);
+    Not(in= ng, out= NotNg);
+    // JGT: out > 0
+    And(a= NotZr, b= NotNg, out= JGT);
+    // JEQ: out == 0
+    // zr
+    // JGE: out >= 0
+    // NotNg
+    // JLT: out < 0
+    // ng
+    // JNE: out != 0
+    // NotZr
+    // JLE: out <= 0
+    Or(a=zr, b=ng, out=JLE);
+    // JMP: Unconditional jump
+
+    And(a=instruction[0], b=JGT, out=jump1); // JGT
+    And(a=instruction[1], b=zr,  out=jump2); // JEQ
+    And(a=instruction[2], b=ng,  out=jump3); // JLT 
+
+    // check for the 1 position: 001, 010, 100. It should contain all the situation.
+
+    Or(a=jump1, b=jump2, out=t1);
+    Or(a=t1, b=jump3, out=jumpCond);
+    
+    And(a=instruction[15], b=jumpCond, out=loadPC);
+    Not(in= loadPC, out= inc);
+    // PC
+    PC(in= Aregister, load= loadPC, inc= inc, reset= reset, out[0..14]= pc);
 }
